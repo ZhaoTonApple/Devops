@@ -1,0 +1,74 @@
+version: '3'
+
+# 定义通用配置
+x-common-config: &common-config
+  restart: unless-stopped
+  environment:
+    TZ: Asia/Shanghai
+    LANG: en_US.UTF-8
+
+# 网桥xx -> 方便相互通讯
+networks:
+  xx:
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.22.0.0/24"
+
+name: xx # project名称  eg: 等同于 docker-compose -f docker-compose-nginx.yml -p nginx up -d 运行时的 -p
+services:
+  # tips:不要使用带下划线的名称 ex:zq_1   原因：在某些程序里，解析不了此数据
+  zq-1:
+    image: xx
+    <<: *common-config
+
+  zq2:
+    image: xx
+    links:                              # 配置指定容器与当前服务连接， 并指定服务别名
+      - "zq1:zk"
+    networks:
+      xx:
+        ipv4_address: 172.22.0.11       # 设置固定IP地址
+
+  zq3:
+    image: xx                           # 镜像
+    container_name: xx                  # 容器名为'xx'
+    hostname: localhost                 # 指定容器hostname
+    #    restart: always                    # 指定容器退出后的重启策略为始终重启
+    restart: unless-stopped             # 指定容器退出后的重启策略为始终重启，但是不考虑在Docker守护进程启动时就已经停止了的容器
+    privileged: true                    # 获取宿主机root权限
+    volumes:                            # 数据卷挂载路径设置,将本机目录映射到容器目录
+      - "/xx/my.cnf:/xx/my.cnf"
+      - "/etc/localtime:/etc/localtime:ro"  # 设置与宿主机时间同步
+    environment:                        # 设置环境变量,相当于docker run命令中的-e
+      TZ: Asia/Shanghai
+      LANG: en_US.UTF-8
+    ports:                              # 映射端口
+      - "xx:xx"
+      - "10001-10010:10001-10010"       # 端口组
+    links:                              # 配置容器互相连接
+      - zq1
+      - zq2
+    entrypoint: /code/entrypoint.sh     # 指定接入点,用于定义容器启动以后的执行体的
+    command: bundle exec thin -p 3000   # 设置容器的默认执行的命令。`CMD/command`设定的命令会在`entrypoint`之后执行。
+    depends_on:                         # 解决容器依赖启动先后问题
+      - zq1
+      - zq2
+    network_mode: host # 容器使用宿主机网络 ( tips:此配置和`ports`/`links`不可结合使用 )
+    # 日志
+    logging:
+      driver: "json-file"   # 默认的文件日志驱动
+      options:
+        max-size: "100m"    # 单个日志文件大小为100m
+        max-file: "3"       # 最多3个日志文件
+    # 容器添加自定义hosts -- 往容器内的`/etc/hosts`文件中添加记录
+    extra_hosts:
+      - "test-mysql:192.168.101.91"
+      - "test-redis:192.168.101.92"
+
+  zq4:
+    # 构建镜像
+    build:
+      context: ./test # Dockerfile上下文路径
+      dockerfile: Dockerfile # 指定 Dockerfile 文件的路径 -- tips: Dockerfile中的路径(eg:jar路径) 基于上面配置的`context`路径
+    image: docker-compose-test:latest # 如果这个时候指定镜像会去直接拉取镜像，而不会先通过上面的build构建镜像 （ 可以先通过 `docker-compose up --build` 先构建出镜像 再 `docker-compose up -d`运行 ）
