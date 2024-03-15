@@ -76,21 +76,6 @@ docker exec spug init_spug admin spug.cc
 你可以在 系统管理/系统设置/关于 中查看当前运行的 Spug 版本，可以在 [更新日志](https://spug.cc/docs/change-log) 查看当前最新版本，如果需要升级 Spug 请参考 [版本升级文档](https://spug.cc/docs/update-version)。
 
 
-主机管理
-![img_5.png](img_5.png)
-
-主机在线终端
-![img_6.png](img_6.png)image
-
-文件在线上传下载
-![img_7.png](img_7.png)image
-
-主机批量执行
-![img_8.png](img_8.png)image image
-![img_9.png](img_9.png)
-应用发布
-![img_10.png](img_10.png)image
-
 监控报警
 ![img_11.png](img_11.png)image
 
